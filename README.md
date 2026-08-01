@@ -30,14 +30,18 @@
 │   ├── 自检.py              # 元数据 / 校验 / 覆盖率自检（46 项）
 │   ├── 版本回归测试.py       # V3.1 纯净度回归
 │   └── 生成器与V31测试.py     # 生成器与 V3.1 一致性测试
-└── release/
-    └── 七日杀配置编辑器.exe  # 可直接运行的单文件可执行程序（Windows）
+└── release/                 # （本仓库不纳入二进制）Windows 可执行程序见 GitHub Releases
 ```
+
+> 注：出于仓库体积考虑，可执行程序以 **Release 资源** 形式发布，不在文件树中。
+> 下载：`https://github.com/jianRY/7D2D-edit-xml/releases/download/v1.0/7D2D-Config-Editor-v1.0.exe`
 
 ## 使用方式
 
 ### 方式一：直接运行（推荐）
-下载 `release/七日杀配置编辑器.exe`，双击即可在 Windows 上运行，无需安装 Python。
+到 [Releases](https://github.com/jianRY/7D2D-edit-xml/releases) 下载 `7D2D-Config-Editor-v1.0.exe`，双击即可在 Windows 上运行，无需安装 Python。
+
+> 下载直链：https://github.com/jianRY/7D2D-edit-xml/releases/download/v1.0/7D2D-Config-Editor-v1.0.exe
 
 ### 方式二：运行源码
 需要 Python 3.8+ 并带有 `tkinter`（Windows / macOS 通常自带）。
