@@ -7,6 +7,28 @@
 > 旧版 `serverconfig.xml` 中的对应键（如 `GameDifficulty`、`BloodMoonFrequency`、`LootAbundance`、`XPMultiplier` 等）在 V3 服务器上会被静默忽略。
 > 打开老存档时，这些键会以 **「未识别配置」** 形式原样保留，保存时也不会丢数据。
 
+## ⚠️ v1.0.1 重要修复（v1.0 用户请务必升级）
+
+v1.0 存在一个会导致 **「用工具改完配置后服务器起不来」** 的严重缺陷：
+
+保存时程序会沿用「读取时猜到的文件编码」写回。若你的 `serverconfig.xml` 曾被记事本以 **ANSI** 保存过
+（中文服主很常见），文件实际是 GBK 编码，而 `serverconfig.xml` 按 XML 规范必须是 **UTF-8**。
+结果服务器解析时报 `not well-formed (invalid token)`，**启动直接失败**。
+
+v1.0.1 的修复：
+
+1. **一律以 UTF-8 写回** —— 无论源文件什么编码，GBK 文件会被顺带修复成正确的 UTF-8。
+2. **写盘前强制 XML 合法性校验** —— 生成内容不是合法 XML 就拒绝写入并报错，原文件保持不动，从根上杜绝配置被写坏。
+3. **写入前去除空白** —— 端口等数字项、枚举项、路径项及 `SandboxCode` 自动去首尾空白
+   （从网页复制沙盒码常带换行，同样会让服务器解析失败）。
+
+已经中招的恢复办法（二选一）：
+
+- 用 v1.0.1 重新打开该 `serverconfig.xml`，随便改一项再改回来后保存，文件会被自动修正为 UTF-8；
+- 或到 `serverconfig.xml` 同目录的 **「配置备份」** 文件夹，用「备份 → 还原」恢复出问题之前的版本。
+
+回归测试见 `tests/编码与写盘安全测试.py`（14 项）。
+
 ## 主要功能
 
 - **可视化编辑**：左侧分类树（18 大类 / 70 项可编辑配置），右侧逐项填写，中文说明 + 取值范围 + 枚举候选一目了然。
@@ -28,20 +50,21 @@
 ├── tests/                   # 测试样例与自检脚本
 │   ├── serverconfig.xml     # 官方样例配置
 │   ├── 自检.py              # 元数据 / 校验 / 覆盖率自检（46 项）
+│   ├── 编码与写盘安全测试.py  # 编码 / XML 合法性 / 去空白回归（14 项）
 │   ├── 版本回归测试.py       # V3.1 纯净度回归
 │   └── 生成器与V31测试.py     # 生成器与 V3.1 一致性测试
 └── release/                 # （本仓库不纳入二进制）Windows 可执行程序见 GitHub Releases
 ```
 
 > 注：出于仓库体积考虑，可执行程序以 **Release 资源** 形式发布，不在文件树中。
-> 下载：`https://github.com/jianRY/7D2D-edit-xml/releases/download/v1.0/7D2D-Config-Editor-v1.0.exe`
+> 下载：`https://github.com/jianRY/7D2D-edit-xml/releases/download/v1.0.1/7D2D-Config-Editor-v1.0.1.exe`
 
 ## 使用方式
 
 ### 方式一：直接运行（推荐）
-到 [Releases](https://github.com/jianRY/7D2D-edit-xml/releases) 下载 `7D2D-Config-Editor-v1.0.exe`，双击即可在 Windows 上运行，无需安装 Python。
+到 [Releases](https://github.com/jianRY/7D2D-edit-xml/releases) 下载 `7D2D-Config-Editor-v1.0.1.exe`，双击即可在 Windows 上运行，无需安装 Python。
 
-> 下载直链：https://github.com/jianRY/7D2D-edit-xml/releases/download/v1.0/7D2D-Config-Editor-v1.0.exe
+> 下载直链：https://github.com/jianRY/7D2D-edit-xml/releases/download/v1.0.1/7D2D-Config-Editor-v1.0.1.exe
 
 ### 方式二：运行源码
 需要 Python 3.8+ 并带有 `tkinter`（Windows / macOS 通常自带）。
@@ -65,6 +88,12 @@ python tests/自检.py
 ```
 
 预期输出：`通过 46 项，失败 0 项`。
+
+```bash
+python tests/编码与写盘安全测试.py
+```
+
+预期输出：`ALL_ENCODING_TESTS_OK`。
 
 ## 校验单个配置文件（命令行）
 
