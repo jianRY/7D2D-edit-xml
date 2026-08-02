@@ -20,6 +20,7 @@
     danger    True 表示涉及安全，需谨慎
     legacy    （历史字段，本工具仅面向 V3.1，旧版本遗留项不再收录）
 """
+import re
 
 # ---------------------------------------------------------------- 分类定义
 # (内部key, 中文标题, 图标字符)
@@ -720,6 +721,13 @@ def display_value(setting, raw):
     return raw
 
 
+# 这些类型的值绝不允许带首尾空白：数字/布尔/枚举带空格会让服务器解析失败，
+# 路径带空格会指向不存在的目录。password 与普通 text 保持原样（空格可能是有意的）。
+_STRIP_TYPES = ("int", "float", "bool", "enum", "path")
+# 个别 text 类型必须清掉全部空白：从网页复制沙盒码极易带上换行或尾随空格
+_NOSPACE_KEYS = ("SandboxCode",)
+
+
 def parse_display(setting, text):
     """把界面上的中文显示文本还原成写入文件的原始值。"""
     t = setting.get("type")
@@ -729,7 +737,11 @@ def parse_display(setting, text):
         for val, label in setting.get("options", []):
             if label == text:
                 return val
-        return text
+        return text.strip()
+    if setting.get("key") in _NOSPACE_KEYS:
+        return re.sub(r"\s+", "", text)
+    if t in _STRIP_TYPES:
+        return text.strip()
     return text
 
 
