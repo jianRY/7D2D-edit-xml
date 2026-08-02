@@ -29,6 +29,18 @@ v1.0.1 的修复：
 
 回归测试见 `tests/编码与写盘安全测试.py`（14 项）。
 
+## v1.0.2 修复（确认对话框按钮不可见）
+
+v1.0.1 的「保存前改动确认 / 查看改动对比」对话框存在布局缺陷：可滚动的改动清单
+会吞掉全部剩余空间，把底部的「确认保存 / 取消」按钮挤到窗口可视区之外，
+必须手动缩放窗口才能看到按钮。
+
+v1.0.2 的修复：
+
+1. 按钮栏改为**贴底固定**（`side=bottom`），始终显示在窗口底部可见区域；
+2. 改动清单放在中间剩余空间并保留滚动，长清单不再撑爆窗口；
+3. 设置窗口**最小尺寸 560×360**，避免小屏 / 高分屏下按钮被压没。
+
 ## 主要功能
 
 - **可视化编辑**：左侧分类树（18 大类 / 70 项可编辑配置），右侧逐项填写，中文说明 + 取值范围 + 枚举候选一目了然。
@@ -57,14 +69,14 @@ v1.0.1 的修复：
 ```
 
 > 注：出于仓库体积考虑，可执行程序以 **Release 资源** 形式发布，不在文件树中。
-> 下载：`https://github.com/jianRY/7D2D-edit-xml/releases/download/v1.0.1/7D2D-Config-Editor-v1.0.1.exe`
+> 下载：`https://github.com/jianRY/7D2D-edit-xml/releases/download/v1.0.2/7D2D-Config-Editor-v1.0.2.exe`
 
 ## 使用方式
 
 ### 方式一：直接运行（推荐）
-到 [Releases](https://github.com/jianRY/7D2D-edit-xml/releases) 下载 `7D2D-Config-Editor-v1.0.1.exe`，双击即可在 Windows 上运行，无需安装 Python。
+到 [Releases](https://github.com/jianRY/7D2D-edit-xml/releases) 下载 `7D2D-Config-Editor-v1.0.2.exe`，双击即可在 Windows 上运行，无需安装 Python。
 
-> 下载直链：https://github.com/jianRY/7D2D-edit-xml/releases/download/v1.0.1/7D2D-Config-Editor-v1.0.1.exe
+> 下载直链：https://github.com/jianRY/7D2D-edit-xml/releases/download/v1.0.2/7D2D-Config-Editor-v1.0.2.exe
 
 ### 方式二：运行源码
 需要 Python 3.8+ 并带有 `tkinter`（Windows / macOS 通常自带）。
