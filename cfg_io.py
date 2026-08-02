@@ -17,6 +17,7 @@ import re
 import html
 import shutil
 import datetime
+import xml.etree.ElementTree as ET
 
 from cfg_meta import (SETTINGS_BY_KEY, parse_ver, SANDBOX_HINT, V31_CODE_HINT)
 
@@ -59,7 +60,12 @@ def _in_spans(pos, spans):
 
 
 def _read_text(path):
-    """读取文件，保留原始换行符，返回 (文本, 编码, 是否带BOM)。"""
+    """读取文件，保留原始换行符，返回 (文本, 源编码, 是否带BOM)。
+
+    源编码仅用于「把字节正确还原成文字」，**不用于回写**。
+    serverconfig.xml 按 XML 规范必须是 UTF-8（声明里没有 encoding 属性时
+    默认就是 UTF-8），因此写回一律用 UTF-8，见 _write_text。
+    """
     with open(path, "rb") as f:
         raw = f.read()
     bom = raw.startswith(b"\xef\xbb\xbf")
@@ -74,11 +80,33 @@ def _read_text(path):
 
 
 def _write_text(path, text, encoding="utf-8", bom=False):
-    data = text.encode(encoding, errors="replace")
+    """写入文件。**永远以 UTF-8 编码**，encoding 参数仅为兼容旧调用签名。
+
+    历史 bug：早期版本会按「读进来时猜到的编码」原样写回。若用户的
+    serverconfig.xml 曾被记事本以 ANSI(GBK) 保存过，工具就会写出 GBK 字节，
+    而服务器的 XML 解析器按 UTF-8 读取，直接报 not well-formed，
+    表现为「用工具改完配置后服务器起不来」。
+    """
+    data = text.encode("utf-8")
     if bom:
         data = b"\xef\xbb\xbf" + data
     with open(path, "wb") as f:
         f.write(data)
+
+
+def assert_wellformed(text):
+    """写盘前的安全网：确认文本是合法 XML，否则拒绝写入。
+
+    宁可保存失败弹窗，也绝不能把损坏的配置写进服务器目录。
+    """
+    try:
+        ET.fromstring(text.encode("utf-8"))
+    except ET.ParseError as e:
+        raise ValueError(
+            "生成的配置不是合法的 XML，已中止写入以保护你的服务器。\n"
+            "错误位置：%s\n\n"
+            "原文件未被改动。请把这个提示反馈给作者。" % e)
+    return True
 
 
 # ==================================================================== 主体类
@@ -203,14 +231,16 @@ class ConfigFile:
     # ------------------------------------------------------------ 保存
     def save(self, new_values, backup=True):
         """写回文件。返回 (备份文件路径 或 None)。"""
-        backup_file = self.backup() if backup and os.path.exists(self.path) else None
         text = self.build_text(new_values)
+        assert_wellformed(text)          # 先验后写，坏 XML 一律不落盘
+        backup_file = self.backup() if backup and os.path.exists(self.path) else None
         _write_text(self.path, text, self.encoding, self.bom)
         self.load()
         return backup_file
 
     def save_as(self, target, new_values):
         text = self.build_text(new_values)
+        assert_wellformed(text)
         _write_text(target, text, self.encoding, self.bom)
         return target
 
