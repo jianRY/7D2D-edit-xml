@@ -1212,9 +1212,31 @@ class ConfigEditorApp:
         result = {"ok": False}
         win = self._dialog("改动确认" if not readonly else "改动对比", 820, 620)
         win.resizable(True, True)   # 允许缩放，文字随窗口自动换行
+        win.minsize(560, 360)       # 最小可用尺寸，确认/取消按钮永不被压没
 
+        # —— 底部按钮栏：最先声明并贴底，确保始终在窗口可视区内 ——
+        bar = ttk.Frame(win, padding=(16, 12))
+        bar.pack(side="bottom", fill="x")
+        ttk.Label(bar, text="保存前会自动把原文件备份到「%s」文件夹。" % cfg_io.BACKUP_DIRNAME,
+                  style="SubBg.TLabel").pack(side="left")
+
+        if readonly:
+            ttk.Button(bar, text="关闭", command=win.destroy).pack(side="right")
+        else:
+            def ok():
+                if errs and not messagebox.askyesno(
+                        "仍有错误",
+                        "检查发现 %d 个错误，继续保存可能导致服务器无法启动。\n确定仍要保存吗？"
+                        % len(errs), parent=win):
+                    return
+                result["ok"] = True
+                win.destroy()
+            ttk.Button(bar, text="确认保存", style="Accent.TButton", command=ok).pack(side="right")
+            ttk.Button(bar, text="取消", command=win.destroy).pack(side="right", padx=(0, 8))
+
+        # —— 顶部标题（side=top）——
         ttk.Label(win, text="即将写入的改动", style="Title.TLabel").pack(
-            anchor="w", padx=16, pady=(14, 2))
+            anchor="w", side="top", padx=16, pady=(14, 2))
         errs = [i for i in issues if i[0] == "error"]
         warns = [i for i in issues if i[0] == "warn"]
         sub = "共 %d 项改动" % len(changes)
@@ -1222,11 +1244,33 @@ class ConfigEditorApp:
             sub += "　|　⚠ 发现 %d 个错误" % len(errs)
         if warns:
             sub += "　|　%d 条提醒" % len(warns)
-        ttk.Label(win, text=sub, style="SubBg.TLabel").pack(anchor="w", padx=16, pady=(0, 8))
+        ttk.Label(win, text=sub, style="SubBg.TLabel").pack(anchor="w", side="top", padx=16, pady=(0, 8))
 
-        # 可滚动的改动清单：每条独立成行，文字按窗口宽度自动换行
+        # —— 检查提示（贴底，位于按钮栏上方）——
+        if issues:
+            ifbox = ttk.Frame(win)
+            ifbox.pack(fill="x", side="bottom", padx=16, pady=(0, 8))
+            box = tk.Text(ifbox, wrap="word", font=FONT_S, bg="#fffaf0",
+                          relief="solid", bd=1, padx=10, pady=6,
+                          height=min(8, max(3, len(errs) + len(warns))))
+            sbx = ttk.Scrollbar(ifbox, orient="vertical", command=box.yview)
+            box.configure(yscrollcommand=sbx.set)
+            sbx.pack(side="right", fill="y")
+            box.pack(side="left", fill="x", expand=True)
+            for level, key, msg in errs + warns:
+                mark = "✖" if level == "error" else "⚠"
+                tag = "err" if level == "error" else "warn"
+                box.tag_config("err", foreground=C_ACCENT)
+                box.tag_config("warn", foreground=C_WARN)
+                box.insert("end", mark + " ", tag)
+                box.insert("end", msg + "\n", tag)
+            box.configure(state="disabled")
+            ttk.Label(win, text="检查提示", style="Title.TLabel").pack(
+                anchor="w", side="bottom", padx=16, pady=(6, 2))
+
+        # —— 改动清单（占满中间剩余空间，可滚动）——
         sf = ScrollFrame(win)
-        sf.pack(fill="both", expand=True, padx=16, pady=(0, 8))
+        sf.pack(fill="both", expand=True, side="top", padx=16, pady=(0, 8))
         body = sf.body
         wrap_labels = []   # 需要随窗口宽度变化重新换行的标签
 
@@ -1273,46 +1317,6 @@ class ConfigEditorApp:
         body.bind("<Configure>", _relayout)
         win.bind("<Configure>", _relayout)
         win.after_idle(_relayout)
-
-        if issues:
-            ttk.Label(win, text="检查提示", style="Title.TLabel").pack(
-                anchor="w", padx=16, pady=(6, 2))
-            ifbox = ttk.Frame(win)
-            ifbox.pack(fill="x", padx=16, pady=(0, 8))
-            box = tk.Text(ifbox, wrap="word", font=FONT_S, bg="#fffaf0",
-                          relief="solid", bd=1, padx=10, pady=6,
-                          height=min(8, max(3, len(errs) + len(warns))))
-            sbx = ttk.Scrollbar(ifbox, orient="vertical", command=box.yview)
-            box.configure(yscrollcommand=sbx.set)
-            sbx.pack(side="right", fill="y")
-            box.pack(side="left", fill="x", expand=True)
-            for level, key, msg in errs + warns:
-                mark = "✖" if level == "error" else "⚠"
-                tag = "err" if level == "error" else "warn"
-                box.tag_config("err", foreground=C_ACCENT)
-                box.tag_config("warn", foreground=C_WARN)
-                box.insert("end", mark + " ", tag)
-                box.insert("end", msg + "\n", tag)
-            box.configure(state="disabled")
-
-        bar = ttk.Frame(win, padding=(16, 12))
-        bar.pack(fill="x")
-        ttk.Label(bar, text="保存前会自动把原文件备份到「%s」文件夹。" % cfg_io.BACKUP_DIRNAME,
-                  style="SubBg.TLabel").pack(side="left")
-
-        if readonly:
-            ttk.Button(bar, text="关闭", command=win.destroy).pack(side="right")
-        else:
-            def ok():
-                if errs and not messagebox.askyesno(
-                        "仍有错误",
-                        "检查发现 %d 个错误，继续保存可能导致服务器无法启动。\n确定仍要保存吗？"
-                        % len(errs), parent=win):
-                    return
-                result["ok"] = True
-                win.destroy()
-            ttk.Button(bar, text="确认保存", style="Accent.TButton", command=ok).pack(side="right")
-            ttk.Button(bar, text="取消", command=win.destroy).pack(side="right", padx=(0, 8))
 
         self.root.wait_window(win)
         return result["ok"]
