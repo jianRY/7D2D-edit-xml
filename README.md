@@ -41,6 +41,24 @@ v1.0.2 的修复：
 2. 改动清单放在中间剩余空间并保留滚动，长清单不再撑爆窗口；
 3. 设置窗口**最小尺寸 560×360**，避免小屏 / 高分屏下按钮被压没。
 
+## v1.0.3 修复（保存时会写入服务器不支持的属性导致起不来）
+
+v1.0.2 及更早版本会在保存时把 **「存档目录（SaveGameFolder）」** 写进 `serverconfig.xml`。
+但《七日杀》V3.1 的 `serverconfig.xml` **并不支持 `SaveGameFolder` 这一项**（它是启动命令行参数
+`-savegamefolder`，不是配置文件项）。服务器读到这个不认识的项会直接报
+`Unknown config option` 并中止启动。这个 bug 在 v1.0.1 修复 GBK 编码后才暴露——之前文件因编码
+损坏整体解析失败，根本走不到这一行；编码修好后文件能正常解析，这个非法属性才被服务器发现。
+
+v1.0.3 的修复：
+
+1. 从设置项里**彻底移除**「存档目录（SaveGameFolder）」配置，界面不再提供它；
+2. 保存时增加**剥离**机制：无论原文件里有没有 `SaveGameFolder`，保存后都会从 `serverconfig.xml`
+   中删除该项（连同工具生成的注释行），确保写出的配置服务器一定能解析；
+3. 合法且更常用的「用户数据目录（UserDataFolder）」保留不变。
+
+> 想自定义存档位置，请用启动命令行参数 `-savegamefolder "你的路径"`，而不是写在 `serverconfig.xml` 里。
+> 已中招的用户：用 v1.0.3 重新打开该 `serverconfig.xml` 保存一次即可自动修好；或到「配置备份」文件夹还原。
+
 ## 主要功能
 
 - **可视化编辑**：左侧分类树（18 大类 / 70 项可编辑配置），右侧逐项填写，中文说明 + 取值范围 + 枚举候选一目了然。
@@ -69,14 +87,14 @@ v1.0.2 的修复：
 ```
 
 > 注：出于仓库体积考虑，可执行程序以 **Release 资源** 形式发布，不在文件树中。
-> 下载：`https://github.com/jianRY/7D2D-edit-xml/releases/download/v1.0.2/7D2D-Config-Editor-v1.0.2.exe`
+> 下载：`https://github.com/jianRY/7D2D-edit-xml/releases/download/v1.0.3/7D2D-Config-Editor-v1.0.3.exe`
 
 ## 使用方式
 
 ### 方式一：直接运行（推荐）
-到 [Releases](https://github.com/jianRY/7D2D-edit-xml/releases) 下载 `7D2D-Config-Editor-v1.0.2.exe`，双击即可在 Windows 上运行，无需安装 Python。
+到 [Releases](https://github.com/jianRY/7D2D-edit-xml/releases) 下载 `7D2D-Config-Editor-v1.0.3.exe`，双击即可在 Windows 上运行，无需安装 Python。
 
-> 下载直链：https://github.com/jianRY/7D2D-edit-xml/releases/download/v1.0.2/7D2D-Config-Editor-v1.0.2.exe
+> 下载直链：https://github.com/jianRY/7D2D-edit-xml/releases/download/v1.0.3/7D2D-Config-Editor-v1.0.3.exe
 
 ### 方式二：运行源码
 需要 Python 3.8+ 并带有 `tkinter`（Windows / macOS 通常自带）。
