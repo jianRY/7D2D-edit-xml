@@ -87,14 +87,14 @@ v1.0.3 的修复：
 ```
 
 > 注：出于仓库体积考虑，可执行程序以 **Release 资源** 形式发布，不在文件树中。
-> 下载：`https://github.com/jianRY/7D2D-edit-xml/releases/download/v1.0.3/7D2D-Config-Editor-v1.0.3.exe`
+> 下载：`https://github.com/jianRY/7D2D-edit-xml/releases/download/v2.0/7D2D-Config-Editor-v2.0.exe`
 
 ## 使用方式
 
 ### 方式一：直接运行（推荐）
-到 [Releases](https://github.com/jianRY/7D2D-edit-xml/releases) 下载 `7D2D-Config-Editor-v1.0.3.exe`，双击即可在 Windows 上运行，无需安装 Python。
+到 [Releases](https://github.com/jianRY/7D2D-edit-xml/releases) 下载 `7D2D-Config-Editor-v2.0.exe`，双击即可在 Windows 上运行，无需安装 Python。
 
-> 下载直链：https://github.com/jianRY/7D2D-edit-xml/releases/download/v1.0.3/7D2D-Config-Editor-v1.0.3.exe
+> 下载直链：https://github.com/jianRY/7D2D-edit-xml/releases/download/v2.0/7D2D-Config-Editor-v2.0.exe
 
 ### 方式二：运行源码
 需要 Python 3.8+ 并带有 `tkinter`（Windows / macOS 通常自带）。
