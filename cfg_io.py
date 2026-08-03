@@ -35,6 +35,12 @@ CLASS_OF_KEY = {
     "QuestProgressionDailyLimit": "Missions",
 }
 
+# V3.1 的 serverconfig.xml 不支持、但常被旧教程/旧版本写入 serverconfig.xml 的属性。
+# 写在配置文件里会导致服务器报 "Unknown config option" 并中止启动
+# （它们应通过启动命令行参数设置，例如 -savegamefolder，而非写进配置文件）。
+# 工具保存时一律从生成文本中剥离这些属性，避免原文件残留或重新写回。
+UNSUPPORTED_KEYS = {"SaveGameFolder"}
+
 
 # ==================================================================== 工具函数
 def escape_attr(value):
@@ -109,6 +115,24 @@ def assert_wellformed(text):
     return True
 
 
+def _strip_unsupported(text):
+    """从文本中剥离 V3.1 不支持写入 serverconfig.xml 的属性。
+
+    既处理「原文件里已存在」的残留，也避免它们被重新写回。
+    会连同工具生成的紧贴注释行（<!-- xxx：... -->）一起删除。
+    """
+    for key in UNSUPPORTED_KEYS:
+        # 先删「工具生成的注释行 + property 行」
+        text = re.sub(
+            r'[ \t]*<!--[^\n]*-->\s*\n[ \t]*<property\s+name="'
+            + re.escape(key) + r'"[^>]*/>\s*\n?', '', text)
+        # 再删孤立的 property 行（上方没有注释的情况）
+        text = re.sub(
+            r'[ \t]*<property\s+name="' + re.escape(key) + r'"[^>]*/>\s*\n?',
+            '', text)
+    return text
+
+
 # ==================================================================== 主体类
 class ConfigFile:
     """一个 serverconfig.xml 文件的内存表示。"""
@@ -156,32 +180,39 @@ class ConfigFile:
 
         new_values 中「文件里已有」的键做定点替换；
         「文件里没有」的键视为新增，追加到合适位置。
+        V3.1 不支持写入 serverconfig.xml 的属性（UNSUPPORTED_KEYS）会被剥离，
+        既不参与替换，也不被重新追加。
         """
-        spans = _comment_spans(self.text)
+        # 先剥离不支持的属性（连同紧贴注释行），避免原文件残留
+        base = _strip_unsupported(self.text)
+        spans = _comment_spans(base)
+        effective = {k: v for k, v in new_values.items() if k not in UNSUPPORTED_KEYS}
         touched = set()
 
         def repl(m):
             if _in_spans(m.start(), spans):
                 return m.group(0)          # 注释里的内容一律不动
             name = m.group(1)
-            if name in new_values:
+            if name in UNSUPPORTED_KEYS:
+                return m.group(0)          # 理论上已被剥离，兜底不动
+            if name in effective:
                 touched.add(name)
                 old_val = html.unescape(m.group(2))
-                if str(new_values[name]) == old_val:
+                if str(effective[name]) == old_val:
                     return m.group(0)      # 值没变，连格式都不动
                 # 只替换 value="..." 的内容，保留原有空白排版
                 whole = m.group(0)
                 return re.sub(r'(value\s*=\s*")([^"]*)(")',
-                              lambda vm: vm.group(1) + escape_attr(new_values[name]) + vm.group(3),
+                              lambda vm: vm.group(1) + escape_attr(effective[name]) + vm.group(3),
                               whole, count=1)
             return m.group(0)
 
-        text = PROP_RE.sub(repl, self.text)
+        text = PROP_RE.sub(repl, base)
 
         # 需要新增的键
-        added = [k for k in new_values if k not in touched and k not in self.values]
+        added = [k for k in effective if k not in touched and k not in self.values]
         if added:
-            text = self._append_props(text, added, new_values)
+            text = self._append_props(text, added, effective)
         return text
 
     def _append_props(self, text, keys, values):
