@@ -15,11 +15,21 @@ from cfg_meta import (CATEGORIES, CATEGORY_TITLES, SETTINGS, SETTINGS_BY_KEY,
                       SANDBOX_GEN_NAME, SANDBOX_GENERATORS, generators_for,
                       V31_CODE_HINT)
 
+import autoupdate
+
 APP_TITLE = "七日杀服务器配置编辑器"
 # 注意：APP_VERSION 是软件内「关于」对话框与标题栏显示的版本号，
 # 也是对外发布的唯一真相源。每次发版改版本时，必须同步修改此常量，
 # 并确保 使用说明.txt 与 README.md 中的版本号与之完全一致（发布脚本会校验）。
-APP_VERSION = "2.0"
+APP_VERSION = "2.1"
+
+# 自动更新：配置(仅记录是否自动检查更新)随 exe 同目录；API 取最新 Release。
+if getattr(sys, "frozen", False):
+    _APP_DIR = os.path.dirname(os.path.abspath(sys.executable))
+else:
+    _APP_DIR = os.path.dirname(os.path.abspath(__file__))
+AUTOUPDATE_CONFIG = os.path.join(_APP_DIR, "autoupdate_config.json")
+UPDATE_API_URL = "https://api.github.com/repos/jianRY/7D2D-edit-xml/releases/latest"
 
 # 配色（浅色主题）
 C_BG = "#f5f6f8"
@@ -171,6 +181,17 @@ class ConfigEditorApp:
         self._build_ui()
         self._auto_load()
         self.render()
+
+        # 启动后后台静默检查更新（失败不打扰；用户可在「帮助 → 检查更新」手动查）
+        autoupdate.run_update_check(
+            self.root,
+            app_name=APP_TITLE,
+            current_version=APP_VERSION,
+            latest_api_url=UPDATE_API_URL,
+            config_file=AUTOUPDATE_CONFIG,
+            install_helper=autoupdate.windows_replace_and_restart,
+            log_fn=None,
+        )
 
     # ================================================================ 样式
     def _build_style(self):
@@ -370,6 +391,11 @@ class ConfigEditorApp:
         hm = tk.Menu(m, tearoff=0, font=FONT)
         hm.add_command(label="使用说明", command=self.action_help)
         hm.add_command(label="关于", command=self.action_about)
+        hm.add_separator()
+        hm.add_command(label="检查更新...", command=lambda: autoupdate.run_update_check(
+            self.root, app_name=APP_TITLE, current_version=APP_VERSION,
+            latest_api_url=UPDATE_API_URL, config_file=AUTOUPDATE_CONFIG,
+            install_helper=autoupdate.windows_replace_and_restart, manual=True))
         m.add_cascade(label="帮助", menu=hm)
         self.root.config(menu=m)
 
