@@ -59,6 +59,12 @@ v1.0.3 的修复：
 > 想自定义存档位置，请用启动命令行参数 `-savegamefolder "你的路径"`，而不是写在 `serverconfig.xml` 里。
 > 已中招的用户：用 v1.0.3 重新打开该 `serverconfig.xml` 保存一次即可自动修好；或到「配置备份」文件夹还原。
 
+## v2.1 新增（自动更新）
+
+从 v2.1 起，程序自带自动更新：启动后后台静默检查 GitHub 最新 Release，发现新版本弹窗展示
+「本次更新内容」，支持「立即更新 / 本次忽略 / 以后不再提醒」。立即更新时显示下载进度、大小、
+实时速度与取消按钮；下载完成后自动替换旧 exe 并重启。也可随时在「帮助 → 检查更新」手动检查。
+
 ## 主要功能
 
 - **可视化编辑**：左侧分类树（18 大类 / 70 项可编辑配置），右侧逐项填写，中文说明 + 取值范围 + 枚举候选一目了然。
@@ -87,14 +93,14 @@ v1.0.3 的修复：
 ```
 
 > 注：出于仓库体积考虑，可执行程序以 **Release 资源** 形式发布，不在文件树中。
-> 下载：`https://github.com/jianRY/7D2D-edit-xml/releases/download/v2.0/7D2D-Config-Editor-v2.0.exe`
+> 下载：`https://github.com/jianRY/7D2D-edit-xml/releases/download/v2.1/7D2D-Config-Editor-v2.1.exe`
 
 ## 使用方式
 
 ### 方式一：直接运行（推荐）
-到 [Releases](https://github.com/jianRY/7D2D-edit-xml/releases) 下载 `7D2D-Config-Editor-v2.0.exe`，双击即可在 Windows 上运行，无需安装 Python。
+到 [Releases](https://github.com/jianRY/7D2D-edit-xml/releases) 下载 `7D2D-Config-Editor-v2.1.exe`，双击即可在 Windows 上运行，无需安装 Python。
 
-> 下载直链：https://github.com/jianRY/7D2D-edit-xml/releases/download/v2.0/7D2D-Config-Editor-v2.0.exe
+> 下载直链：https://github.com/jianRY/7D2D-edit-xml/releases/download/v2.1/7D2D-Config-Editor-v2.1.exe
 
 ### 方式二：运行源码
 需要 Python 3.8+ 并带有 `tkinter`（Windows / macOS 通常自带）。
